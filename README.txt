@@ -154,26 +154,6 @@ MESSAGE DETAILS:
 - Final 9 announcements at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW
 
 ================================================================================
-TROUBLESHOOTING
-================================================================================
-
-Restart not happening at scheduled time:
-  - Check that 'Enable daily restarts' is set to 'true' in the config
-  - Verify the 'Daily restart time' is in correct HH:mm:ss 24-hour UTC format
-  - Check the server console for error messages
-  - Reload the plugin with 'oxide.reload rDailyServerRestarts'
-
-Announcements not showing:
-  - Ensure 'Countdown announcement messages' array contains valid second values
-  - Check that the values are in descending order for best results
-  - Verify players have chat enabled
-
-Server not quitting:
-  - Ensure your server process manager can handle the 'quit' command
-  - Check server logs for any errors during shutdown sequence
-  - Verify save/backup commands are completing successfully if enabled
-
-================================================================================
 LICENSE
 ================================================================================
 

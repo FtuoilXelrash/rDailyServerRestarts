@@ -93,47 +93,7 @@ If you previously used a script that started at 03:45:00 to restart at 04:00:00,
 - `DailyRestartTime`: 04:00:00
 - `Countdown duration in minutes`: 15
 
-## Restart Sequence Example
-
-### Example 1: Restart at 04:23:00 UTC with 15-minute countdown
-
-**Both Console and Player Messages:**
-- **04:08:00 UTC** - "Scheduled Daily Restart in 15 minutes"
-- **04:13:00 UTC** - "Scheduled Daily Restart in 10 minutes"
-- **04:18:00 UTC** - "Scheduled Daily Restart in 5 minutes"
-- **04:20:00 UTC** - "Scheduled Daily Restart in 3 minutes"
-- **04:22:00 UTC** - "Scheduled Daily Restart in 1 minute"
-- **04:22:30 UTC** - "Scheduled Daily Restart in 30 seconds"
-- **04:22:50 UTC** - "Scheduled Daily Restart in 10 seconds"
-- **04:22:55 UTC** - "Scheduled Daily Restart in 5 seconds"
-- **04:23:00 UTC** - "Scheduled Daily Restart NOW!"
-  - Wait 2 seconds
-  - Execute server save (if enabled), wait 10 seconds
-  - Execute server backup (if enabled), wait 10 seconds
-  - Kick all players, wait 5 seconds
-  - Print "Restarting server...", wait 5 seconds
-  - Execute quit command (server restarts)
-
 ### Message Details
 - All countdown announcements are broadcast to both console and in-game chat
-- Total countdown: 15 minutes from trigger to actual restart
-- Final 9 announcements at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW
-
-## Troubleshooting
-
-### Restart not happening at scheduled time
-- Check that `Enable daily restarts` is set to `true` in the config
-- Verify the `Daily restart time` is in correct HH:mm:ss 24-hour UTC format
-- Check the server console for error messages
-- Reload the plugin with `oxide.reload rDailyServerRestarts`
-
-### Announcements not showing
-- Ensure `Countdown announcement messages` array contains valid second values
-- Check that the values are in descending order for best results
-- Verify players have chat enabled
-
-### Server not quitting
-- Ensure your server process manager can handle the `quit` command
-- Check server logs for any errors during shutdown sequence
-- Verify save/backup commands are completing successfully if enabled
-
+- Countdown triggered when within configured minutes of restart time
+- Final announcements at: 5-minute intervals down to 1m, then 30s, 10s, 5s, NOW
