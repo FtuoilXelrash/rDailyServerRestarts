@@ -105,38 +105,67 @@ PERMISSIONS
 HOW IT WORKS
 ================================================================================
 
-1. Daily Check - Every frame, the plugin checks if it's time for the scheduled
-   restart
-2. Countdown Sequence - When restart time arrives, the plugin announces
-   countdowns at configured intervals
-3. Pre-Restart Actions - Optionally saves and backs up the server
-4. Graceful Shutdown - Kicks all players with a notification message
-5. Server Quit - Executes the 'quit' command to shut down the server
+DAILY SCHEDULING:
+1. Time Check - Plugin checks once per second if the configured restart time
+   has arrived
+2. Restart Triggered - When DateTime.Now >= DailyRestartTime, the restart
+   sequence begins
+3. Countdown Starts - The countdown coroutine launches immediately
 
-The server will automatically restart when the quit command completes (typically
-handled by an external process manager or systemd).
+COUNTDOWN & SHUTDOWN SEQUENCE:
+1. Silent Wait Period - Wait until "Countdown duration in minutes" before
+   actual restart time
+2. 5-Minute Interval Announcements - Console announcements at 15m, 10m, 5m
+   before restart (server logs only)
+3. Final Player Countdown - Broadcast to connected players only: 1 minute →
+   30 seconds → 10 seconds → 5 seconds → NOW
+4. Pre-Restart Actions - Execute server save (if enabled), then server
+   backup (if enabled)
+5. Player Kickoff - Kick all players with notification message
+6. Graceful Exit - Plugin exits; external process manager handles server
+   restart
+
+IMPORTANT TIMING NOTE:
+The restart time you set is when the actual shutdown happens, not when the
+countdown begins.
+
+If you set DailyRestartTime = "04:00:00":
+  - Countdown window opens 15 minutes before (at 03:45:00)
+  - Final announcements begin at 03:59:00
+  - Actual shutdown occurs at 04:00:00 UTC
+
+If you previously used a script that started at 03:45:00 to restart at 04:00:00,
+set the plugin to:
+  - DailyRestartTime: 04:00:00
+  - Countdown duration in minutes: 15
 
 ================================================================================
 RESTART SEQUENCE EXAMPLE
 ================================================================================
 
-With default settings, at 04:00:00 UTC, the server will:
+Example: Restart at 04:23:00 UTC with 15-minute countdown
 
- 1. Announce "Server restarting in 1h" (1 hour before)
- 2. Announce "Server restarting in 15m" (15 minutes before)
- 3. Announce "Server restarting in 10m" (10 minutes before)
- 4. Announce "Server restarting in 5m" (5 minutes before)
- 5. Announce "Server restarting in 2m" (2 minutes before)
- 6. Announce "Server restarting in 1m" (1 minute before)
- 7. Announce "Server restarting in 30s" (30 seconds before)
- 8. Announce "Server restarting in 10s" (10 seconds before)
- 9. Announce "Server restarting in 5s" (5 seconds before)
-10. Announce individual second countdowns (4s, 3s, 2s, 1s)
-11. Announce "Server is restarting now!"
-12. Execute server save (if enabled)
-13. Execute server backup (if enabled)
-14. Kick all players
-15. Execute server quit
+CONSOLE MESSAGES (Server Logs):
+03:08:00 UTC - Enter countdown mode
+04:07:00 UTC - "Server restarting in 15 minutes"
+04:12:00 UTC - "Server restarting in 10 minutes"
+04:17:00 UTC - "Server restarting in 5 minutes"
+
+PLAYER MESSAGES (In-Game Chat):
+04:22:00 UTC - "Server restarting in 1 minute"
+04:22:30 UTC - "Server restarting in 30 seconds"
+04:22:50 UTC - "Server restarting in 10 seconds"
+04:22:55 UTC - "Server restarting in 5 seconds"
+04:23:00 UTC - "Server is restarting NOW!"
+             - Execute server save (if enabled)
+             - Execute server backup (if enabled)
+             - Kick all players
+             - Exit plugin (external manager restarts server)
+
+MESSAGE ROUTING:
+- Console Only (5-minute intervals): 15m, 10m, 5m announcements in server logs
+- Players Only (final countdown): 1m, 30s, 10s, 5s, NOW in-game chat
+- Players see exactly 5 messages during the final minute before shutdown
 
 ================================================================================
 TROUBLESHOOTING
