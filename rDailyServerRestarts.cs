@@ -200,7 +200,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            _restartComponent.DoRestart(DateTime.Now.AddSeconds(310));
+            _restartComponent.DoRestart(DateTime.Now.AddSeconds(300));
             BroadcastMessage("ADMIN INITIATED: Server restarting in 5 minutes");
             Puts("Restart scheduled for 5 minutes from now");
         }

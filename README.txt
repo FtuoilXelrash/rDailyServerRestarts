@@ -125,33 +125,10 @@ set the plugin to:
   - DailyRestartTime: 04:00:00
   - Countdown duration in minutes: 15
 
-================================================================================
-RESTART SEQUENCE EXAMPLE
-================================================================================
-
-Example: Restart at 04:23:00 UTC with 15-minute countdown
-
-COUNTDOWN ANNOUNCEMENTS (Both Console and In-Game):
-04:08:00 UTC - "Scheduled Daily Restart in 15 minutes"
-04:13:00 UTC - "Scheduled Daily Restart in 10 minutes"
-04:18:00 UTC - "Scheduled Daily Restart in 5 minutes"
-04:20:00 UTC - "Scheduled Daily Restart in 3 minutes"
-04:22:00 UTC - "Scheduled Daily Restart in 1 minute"
-04:22:30 UTC - "Scheduled Daily Restart in 30 seconds"
-04:22:50 UTC - "Scheduled Daily Restart in 10 seconds"
-04:22:55 UTC - "Scheduled Daily Restart in 5 seconds"
-04:23:00 UTC - "Scheduled Daily Restart NOW!"
-             - Wait 2 seconds
-             - Execute server save (if enabled), wait 10 seconds
-             - Execute server backup (if enabled), wait 10 seconds
-             - Kick all players, wait 5 seconds
-             - Print "Restarting server...", wait 5 seconds
-             - Execute quit command (server restarts)
-
 MESSAGE DETAILS:
 - All countdown announcements are broadcast to both console and in-game chat
-- Total countdown: 15 minutes from trigger to actual restart
-- Final 9 announcements at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW
+- Countdown triggered when within configured minutes of restart time
+- Final announcements at: 5-minute intervals down to 1m, then 30s, 10s, 5s, NOW
 
 ================================================================================
 LICENSE
