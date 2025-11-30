@@ -47,23 +47,34 @@ Edit `oxide/config/rDailyServerRestarts.json`:
 
 ## Commands
 
-### Player Commands
+### Quick Reference
+
+| Command | Who | Where | Permission |
+|---------|-----|-------|-----------|
+| `!restart` | Any Player | In-Game Chat | None |
+| `rdsr.status` | Admin Only | Server Console | Console Access |
+| `rdsr.cancel` | Admin Only | Server Console | Console Access |
+| `rdsr.now` | Admin Only | Server Console | Console Access |
+| `rdsr.schedule` | Admin Only | Server Console | Console Access |
+
+### Player Commands (Everyone Can Use)
 
 #### `!restart`
-Shows the next scheduled restart time. Available to all players in-game chat with a 5-minute global cooldown on announcements.
+**Where to use:** In-game chat only
+**Who can use:** Any player, no permissions needed
+**Cooldown:** Global 5-minute cooldown on announcements
 
-**Usage:**
-```
-!restart
-```
+Shows the next scheduled restart time to the entire server.
 
 **Output Examples:**
 - If restart active: `Server is restarting in X minutes Y seconds`
 - If restart scheduled: `Next scheduled restart: HH:mm:ss UTC (X hours Y minutes)`
 - If no restart scheduled: `No restart currently scheduled`
-- If used too recently: `Restart info was just announced, check chat` (private message to player)
+- If cooldown active: `Restart info was just announced, check chat` (private message to player only)
 
 ### Admin Commands (Server Console Only)
+
+All admin commands can **ONLY** be run from the server console - NOT from in-game chat.
 
 #### `rdsr.status`
 Displays the current restart status and time remaining if a restart is scheduled.
