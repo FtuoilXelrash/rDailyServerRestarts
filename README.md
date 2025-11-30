@@ -1,6 +1,6 @@
 # rDailyServerRestarts
 
-**Version:** 0.0.42
+**Version:** 0.0.52
 **Author:** Ftuoil Xelrash
 **License:** MIT / Open Source
 **Last Updated:** 2025-11-30
@@ -66,14 +66,13 @@ Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no argum
 
 ### Daily Scheduling
 1. **Time Check** - Plugin checks once per second if the configured restart time has arrived
-2. **Restart Triggered** - When `DateTime.Now >= DailyRestartTime`, the restart sequence begins
-3. **Countdown Starts** - The countdown coroutine launches immediately
+2. **Restart Triggered** - When within the configured countdown minutes of restart time, sequence begins
 
 ### Countdown & Shutdown Sequence
-When within 15 minutes of restart time, the countdown begins:
+When within configured countdown minutes of restart time, the countdown begins:
 
-1. **Initial Message** - Broadcast current time remaining (e.g., "Scheduled Daily Restart in 2m 15s")
-2. **Multi-Stage Countdown** - Announce at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW (both console and in-game)
+1. **Initial Message** - Broadcast current time remaining (e.g., "Scheduled Daily Restart in 22m 15s")
+2. **Multi-Stage Countdown** - Announce at: 5-minute intervals down to 1m, then 30s, 10s, 5s, NOW (both console and in-game)
 3. **Pre-Restart Delay** - Wait 2 seconds after "NOW!" message
 4. **Server Save** - Execute `save` command (if enabled), wait 10 seconds
 5. **Server Backup** - Execute `backup` command (if enabled), wait 10 seconds

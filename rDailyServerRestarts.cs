@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.46")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.52")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {

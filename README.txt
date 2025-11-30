@@ -2,7 +2,7 @@
                     rDailyServerRestarts
 ================================================================================
 
-Version:        0.0.42
+Version:        0.0.52
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
 Last Updated:   2025-11-30
@@ -94,22 +94,20 @@ HOW IT WORKS
 DAILY SCHEDULING:
 1. Time Check - Plugin checks once per second if the configured restart time
    has arrived
-2. Restart Triggered - When DateTime.Now >= DailyRestartTime, the restart
-   sequence begins
-3. Countdown Starts - The countdown coroutine launches immediately
+2. Restart Triggered - When within the configured countdown minutes of restart
+   time, sequence begins
 
 COUNTDOWN & SHUTDOWN SEQUENCE:
-1. Silent Wait Period - Wait until "Countdown duration in minutes" before
-   actual restart time
-2. 5-Minute Interval Announcements - Console announcements at 15m, 10m, 5m
-   before restart (server logs only)
-3. Final Player Countdown - Broadcast to connected players only: 1 minute →
-   30 seconds → 10 seconds → 5 seconds → NOW
-4. Pre-Restart Actions - Execute server save (if enabled), then server
-   backup (if enabled)
-5. Player Kickoff - Kick all players with notification message
-6. Graceful Exit - Plugin exits; external process manager handles server
-   restart
+1. Initial Message - Broadcast current time remaining (e.g., "Scheduled Daily
+   Restart in 22m 15s")
+2. Multi-Stage Countdown - Announce at: 5-minute intervals down to 1 minute,
+   then 30 seconds, 10 seconds, 5 seconds, NOW (both console and in-game)
+3. Pre-Restart Delay - Wait 2 seconds after "NOW!" message
+4. Server Save - Execute save command (if enabled), wait 10 seconds
+5. Server Backup - Execute backup command (if enabled), wait 10 seconds
+6. Player Kickoff - Kick all players with notification message, wait 5 seconds
+7. Final Notice - Print "Restarting server..." and wait 5 seconds
+8. Server Shutdown - Execute quit command (external process manager restarts server)
 
 IMPORTANT TIMING NOTE:
 The restart time you set is when the actual shutdown happens, not when the
