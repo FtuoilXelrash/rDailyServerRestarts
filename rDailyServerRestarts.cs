@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.42")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.46")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -217,6 +217,13 @@ namespace Oxide.Plugins
             // If no arguments, schedule for next day at normal restart time
             if (arg.Args == null || arg.Args.Length == 0)
             {
+                // Cancel any active countdown first
+                if (_restartComponent.IsRestarting)
+                {
+                    _restartComponent.CancelRestart();
+                    BroadcastMessage("Server restart has been cancelled");
+                }
+
                 var parsedTime = ParseTime(_config.DailyRestartTime);
                 if (parsedTime == null)
                 {
@@ -387,22 +394,9 @@ namespace Oxide.Plugins
                 if (Instance._config.DebugLogging)
                     Instance.Puts($"[DEBUG] CheckRestartTime: {secondsUntil}s until restart");
 
-                // Announce 15, 10, and 5 minutes before restart time
-                if (secondsUntil == 900)
-                {
-                    Instance.Puts("Scheduled Daily Restart in 15 minutes");
-                }
-                else if (secondsUntil == 600)
-                {
-                    Instance.Puts("Scheduled Daily Restart in 10 minutes");
-                }
-                else if (secondsUntil == 300)
-                {
-                    Instance.Puts("Scheduled Daily Restart in 5 minutes");
-                }
-
-                // Start countdown when within 15 minutes (900 seconds) of restart time
-                if (secondsUntil <= 900 && secondsUntil > 0)
+                // Start countdown when within configured threshold of restart time
+                int countdownThresholdSeconds = Instance._config.CountdownMinutes * 60;
+                if (secondsUntil <= countdownThresholdSeconds && secondsUntil > 0)
                 {
                     if (Instance._config.DebugLogging)
                         Instance.Puts($"[DEBUG] Calling DoRestart for {secondsUntil}s countdown");
@@ -491,8 +485,26 @@ namespace Oxide.Plugins
 
             private IEnumerator RestartRoutine(int totalSecondsLeft)
             {
-                // All countdown announcements: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, Now!
-                int[] countdownPoints = { 900, 600, 300, 180, 60, 30, 10, 5, 0 };
+                // Build countdown announcements: 5-minute intervals down to 1 minute, then 30s, 10s, 5s, NOW
+                List<int> countdownPointsList = new List<int> { 0 }; // NOW! at the end
+
+                // Add 5-minute intervals down to 5 minutes
+                int initialSecondsRemaining = (int)(RestartTime - DateTime.Now).TotalSeconds;
+                int fiveMinuteMultiple = (initialSecondsRemaining / 300) * 300; // Round down to nearest 5 minutes
+
+                for (int i = fiveMinuteMultiple; i >= 300; i -= 300)
+                {
+                    countdownPointsList.Add(i);
+                }
+
+                // Add fixed intervals: 1 minute, 30 seconds, 10 seconds, 5 seconds
+                countdownPointsList.Add(60);
+                countdownPointsList.Add(30);
+                countdownPointsList.Add(10);
+                countdownPointsList.Add(5);
+
+                // Sort descending and remove duplicates
+                int[] countdownPoints = countdownPointsList.Distinct().OrderByDescending(x => x).ToArray();
                 int currentIndex = 0;
 
                 if (Instance._config.DebugLogging)

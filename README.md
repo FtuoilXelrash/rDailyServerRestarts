@@ -100,27 +100,27 @@ If you previously used a script that started at 03:45:00 to restart at 04:00:00,
 
 ### Example 1: Restart at 04:23:00 UTC with 15-minute countdown
 
-**Console Messages (Server Logs):**
-- **03:08:00 UTC** - Enter countdown mode
-- **04:07:00 UTC** - "Server restarting in 15 minutes"
-- **04:12:00 UTC** - "Server restarting in 10 minutes"
-- **04:17:00 UTC** - "Server restarting in 5 minutes"
+**Both Console and Player Messages:**
+- **04:08:00 UTC** - "Scheduled Daily Restart in 15 minutes"
+- **04:13:00 UTC** - "Scheduled Daily Restart in 10 minutes"
+- **04:18:00 UTC** - "Scheduled Daily Restart in 5 minutes"
+- **04:20:00 UTC** - "Scheduled Daily Restart in 3 minutes"
+- **04:22:00 UTC** - "Scheduled Daily Restart in 1 minute"
+- **04:22:30 UTC** - "Scheduled Daily Restart in 30 seconds"
+- **04:22:50 UTC** - "Scheduled Daily Restart in 10 seconds"
+- **04:22:55 UTC** - "Scheduled Daily Restart in 5 seconds"
+- **04:23:00 UTC** - "Scheduled Daily Restart NOW!"
+  - Wait 2 seconds
+  - Execute server save (if enabled), wait 10 seconds
+  - Execute server backup (if enabled), wait 10 seconds
+  - Kick all players, wait 5 seconds
+  - Print "Restarting server...", wait 5 seconds
+  - Execute quit command (server restarts)
 
-**Player Messages (In-Game Chat):**
-- **04:22:00 UTC** - "Server restarting in 1 minute"
-- **04:22:30 UTC** - "Server restarting in 30 seconds"
-- **04:22:50 UTC** - "Server restarting in 10 seconds"
-- **04:22:55 UTC** - "Server restarting in 5 seconds"
-- **04:23:00 UTC** - "Server is restarting NOW!"
-  - Execute server save (if enabled)
-  - Execute server backup (if enabled)
-  - Kick all players
-  - Exit plugin (external manager restarts server)
-
-### Message Routing
-- **Console Only** (5-minute intervals): 15m, 10m, 5m announcements appear in server logs
-- **Players Only** (final countdown): 1m, 30s, 10s, 5s, NOW messages appear in-game chat to connected players
-- Players see exactly 5 messages during the final minute before shutdown
+### Message Details
+- All countdown announcements are broadcast to both console and in-game chat
+- Total countdown: 15 minutes from trigger to actual restart
+- Final 9 announcements at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW
 
 ## Troubleshooting
 
