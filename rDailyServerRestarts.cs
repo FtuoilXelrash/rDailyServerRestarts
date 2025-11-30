@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.1")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.2")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -183,6 +183,14 @@ namespace Oxide.Plugins
             _restartComponent.CancelRestart();
             BroadcastMessage("Server restart has been cancelled");
             Puts("Restart cancelled successfully");
+
+            // Show the rescheduled next restart time
+            var nextRestartTime = _restartComponent.ScheduledRestartTime;
+            if (nextRestartTime < DateTime.MaxValue)
+            {
+                var secondsUntil = (int)(nextRestartTime - DateTime.Now).TotalSeconds;
+                Puts($"Next restart scheduled for {nextRestartTime:HH:mm:ss} UTC ({FormatTime(secondsUntil)} from now)");
+            }
         }
 
         private void NowCommand(ConsoleSystem.Arg arg)
@@ -451,9 +459,10 @@ namespace Oxide.Plugins
                 // Allow cancellation of both active countdown and scheduled restart
                 if (!IsRestarting && _scheduledRestartTime >= DateTime.Now)
                 {
-                    // Scheduled but not yet counting down - just clear the scheduled time
+                    // Scheduled but not yet counting down - clear and reschedule for tomorrow
                     _scheduledRestartTime = DateTime.MaxValue;
                     _lastRestartAttempt = DateTime.Now;
+                    RescheduleNextDaily();
                     return;
                 }
 
@@ -465,12 +474,25 @@ namespace Oxide.Plugins
                     StopCoroutine(_restartCoroutine);
                 }
                 Cleanup();
+                RescheduleNextDaily();
+            }
+
+            private void RescheduleNextDaily()
+            {
+                if (!Instance._config.EnableDailyRestart) return;
+
+                // Parse just the time part
+                if (!TimeSpan.TryParseExact(Instance._config.DailyRestartTime, @"hh\:mm\:ss", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var timeOfDay))
+                    return;
+
+                // Schedule for tomorrow at this time
+                _scheduledRestartTime = DateTime.Now.Date.AddDays(1).Add(timeOfDay);
             }
 
             private IEnumerator RestartRoutine(int totalSecondsLeft)
             {
-                // All countdown announcements: 15m, 10m, 5m, 1m, 30s, 10s, 5s, Now!
-                int[] countdownPoints = { 900, 600, 300, 60, 30, 10, 5, 0 };
+                // All countdown announcements: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, Now!
+                int[] countdownPoints = { 900, 600, 300, 180, 60, 30, 10, 5, 0 };
                 int currentIndex = 0;
 
                 if (Instance._config.DebugLogging)
@@ -513,6 +535,7 @@ namespace Oxide.Plugins
                     string message = nextPoint == 900 ? "Scheduled Daily Restart in 15 minutes" :
                                    nextPoint == 600 ? "Scheduled Daily Restart in 10 minutes" :
                                    nextPoint == 300 ? "Scheduled Daily Restart in 5 minutes" :
+                                   nextPoint == 180 ? "Scheduled Daily Restart in 3 minutes" :
                                    nextPoint == 60 ? "Scheduled Daily Restart in 1 minute" :
                                    nextPoint == 30 ? "Scheduled Daily Restart in 30 seconds" :
                                    nextPoint == 10 ? "Scheduled Daily Restart in 10 seconds" :
@@ -529,7 +552,7 @@ namespace Oxide.Plugins
                 if (_shouldCancel) { Cleanup(); yield break; }
 
                 // Execute restart sequence
-                yield return new WaitForSecondsRealtime(1);
+                yield return new WaitForSecondsRealtime(2);
 
                 if (_shouldCancel) { Cleanup(); yield break; }
 
@@ -537,7 +560,7 @@ namespace Oxide.Plugins
                 if (Instance._config.EnableServerSave)
                 {
                     Instance.Puts("Saving server...");
-                    yield return new WaitForSecondsRealtime(1);
+                    yield return new WaitForSecondsRealtime(2);
                     ConsoleSystem.Run(ConsoleSystem.Option.Server, "save");
                     yield return new WaitForSecondsRealtime(10);
                 }
@@ -548,7 +571,7 @@ namespace Oxide.Plugins
                 if (Instance._config.EnableServerBackup)
                 {
                     Instance.Puts("Backing up server...");
-                    yield return new WaitForSecondsRealtime(1);
+                    yield return new WaitForSecondsRealtime(2);
                     ConsoleSystem.Run(ConsoleSystem.Option.Server, "backup");
                     yield return new WaitForSecondsRealtime(10);
                 }
@@ -561,7 +584,15 @@ namespace Oxide.Plugins
                     player.Kick(Instance.GetMessage("KickReason", player.UserIDString));
                 }
 
+                yield return new WaitForSecondsRealtime(5);
+
+                Instance.Puts("Restarting server...");
+                yield return new WaitForSecondsRealtime(5);
                 Cleanup();
+
+                // Actually restart the server
+                yield return new WaitForSecondsRealtime(2);
+                ConsoleSystem.Run(ConsoleSystem.Option.Server, "quit");
             }
 
             private void ScheduleRestartCheck(DateTime restartTime)
