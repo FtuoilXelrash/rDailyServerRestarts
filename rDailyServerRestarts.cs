@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "0.0.52")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.0")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -26,6 +26,7 @@ namespace Oxide.Plugins
         private Configuration _config;
         private DailyRestartComponent _restartComponent;
         private static rDailyServerRestarts Instance;
+        private DateTime _lastRestartInfoCommand = DateTime.MinValue;
 
         #endregion
 
@@ -117,6 +118,59 @@ namespace Oxide.Plugins
             cmd.AddConsoleCommand("rdsr.cancel", this, nameof(CancelCommand));
             cmd.AddConsoleCommand("rdsr.now", this, nameof(NowCommand));
             cmd.AddConsoleCommand("rdsr.schedule", this, nameof(ScheduleCommand));
+        }
+
+        private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
+        {
+            if (player == null || string.IsNullOrEmpty(message)) return;
+
+            if (message.ToLower() == "!restart")
+                HandleRestartCommand(player);
+        }
+
+        private void HandleRestartCommand(BasePlayer player)
+        {
+            // Check 5-minute cooldown
+            double secondsSinceLastCommand = (DateTime.Now - _lastRestartInfoCommand).TotalSeconds;
+            if (secondsSinceLastCommand < 300)
+            {
+                player.ChatMessage("Restart info was just announced, check chat");
+                return;
+            }
+
+            _lastRestartInfoCommand = DateTime.Now;
+
+            if (_restartComponent == null)
+            {
+                player.ChatMessage("Plugin not initialized");
+                return;
+            }
+
+            // Check if restart is currently active
+            if (_restartComponent.IsRestarting)
+            {
+                int secondsRemaining = (int)(_restartComponent.RestartTime - DateTime.Now).TotalSeconds;
+                if (secondsRemaining > 0)
+                {
+                    BroadcastMessage($"Server is restarting in {FormatTime(secondsRemaining)}");
+                    return;
+                }
+            }
+
+            // Check if there's a scheduled restart
+            var nextRestartTime = _restartComponent.ScheduledRestartTime;
+            if (nextRestartTime < DateTime.MaxValue)
+            {
+                int secondsUntil = (int)(nextRestartTime - DateTime.Now).TotalSeconds;
+                if (secondsUntil > 0)
+                {
+                    BroadcastMessage($"Next scheduled restart: {nextRestartTime:HH:mm:ss} UTC ({FormatTime(secondsUntil)})");
+                    return;
+                }
+            }
+
+            // No restart scheduled
+            BroadcastMessage("No restart currently scheduled");
         }
 
         void Unload()

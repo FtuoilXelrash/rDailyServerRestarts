@@ -2,7 +2,7 @@
                     rDailyServerRestarts
 ================================================================================
 
-Version:        0.0.52
+Version:        1.0.0
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
 Last Updated:   2025-11-30
@@ -70,7 +70,21 @@ CONFIGURATION OPTIONS:
 COMMANDS
 ================================================================================
 
-All commands are SERVER CONSOLE ONLY - they cannot be run from in-game chat.
+PLAYER COMMANDS:
+
+!restart
+  Shows the next scheduled restart time. Available to all players in-game chat
+  with a 5-minute global cooldown on announcements.
+
+  Output Examples:
+  - If restart active: "Server is restarting in X minutes Y seconds"
+  - If restart scheduled: "Next scheduled restart: HH:mm:ss UTC (X hours Y min)"
+  - If no restart: "No restart currently scheduled"
+  - If used too recently: "Restart info was just announced, check chat"
+
+================================================================================
+
+ADMIN COMMANDS (SERVER CONSOLE ONLY):
 
 rdsr.status
   Displays the current restart status and time remaining if a restart is
@@ -81,7 +95,8 @@ rdsr.cancel
   to all players. Shows when the next restart is scheduled.
 
 rdsr.now
-  Schedules an immediate restart in 10 seconds.
+  Schedules an immediate admin-initiated restart in 5 minutes with "ADMIN
+  INITIATED" notification to all players.
 
 rdsr.schedule [seconds]
   Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no
