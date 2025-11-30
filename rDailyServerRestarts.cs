@@ -117,7 +117,6 @@ namespace Oxide.Plugins
             cmd.AddConsoleCommand("rdsr.cancel", this, nameof(CancelCommand));
             cmd.AddConsoleCommand("rdsr.now", this, nameof(NowCommand));
             cmd.AddConsoleCommand("rdsr.schedule", this, nameof(ScheduleCommand));
-            cmd.AddConsoleCommand("rdsr.test", this, nameof(TestCommand));
         }
 
         void Unload()
@@ -201,9 +200,9 @@ namespace Oxide.Plugins
                 return;
             }
 
-            _restartComponent.DoRestart(DateTime.Now.AddSeconds(10));
-            BroadcastMessage("Server restarting in 10 seconds");
-            Puts("Restart scheduled for 10 seconds from now");
+            _restartComponent.DoRestart(DateTime.Now.AddSeconds(310));
+            BroadcastMessage("ADMIN INITIATED: Server restarting in 5 minutes");
+            Puts("Restart scheduled for 5 minutes from now");
         }
 
         private void ScheduleCommand(ConsoleSystem.Arg arg)
@@ -255,19 +254,6 @@ namespace Oxide.Plugins
             DateTime restartTime = DateTime.Now.AddSeconds(seconds);
             _restartComponent.ScheduleManualRestart(restartTime);
             Puts($"Restart scheduled for {restartTime:HH:mm:ss} UTC ({FormatTime(seconds)} from now)");
-        }
-
-        private void TestCommand(ConsoleSystem.Arg arg)
-        {
-            if (arg.Connection != null)
-            {
-                arg.ReplyWith("This command can only be run from server console");
-                return;
-            }
-
-            Puts("[DEV TEST] Initiating restart with 60-second countdown...");
-            Puts("[DEV TEST] Watch server messages and player chat");
-            _restartComponent.DoRestart(DateTime.Now.AddSeconds(60));
         }
 
         #endregion

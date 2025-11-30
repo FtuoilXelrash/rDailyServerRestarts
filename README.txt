@@ -87,9 +87,6 @@ rdsr.schedule [seconds]
   Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no
   argument provided, schedules for next day at configured daily restart time.
 
-rdsr.test
-  Dev command - tests the countdown sequence with 60-second timer.
-
 ================================================================================
 HOW IT WORKS
 ================================================================================
