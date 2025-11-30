@@ -19,9 +19,8 @@ FEATURES
 - Countdown Announcements - Broadcast countdown messages to players at
   customizable intervals
 - Server Save & Backup - Optionally save and backup the server before restarting
-- Admin Commands - Full control over restart scheduling and cancellation
+- Admin Commands - Full control over restart scheduling and cancellation (console-only)
 - Graceful Shutdown - Kicks all players with notification before shutting down
-- Permission System - Restrict restart commands to admins only
 
 ================================================================================
 INSTALLATION
@@ -90,13 +89,6 @@ rdsr.schedule [seconds]
 
 rdsr.test
   Dev command - tests the countdown sequence with 60-second timer.
-
-================================================================================
-PERMISSIONS
-================================================================================
-
-- rdailyserverrestarts.admin
-  Allows use of all restart commands
 
 ================================================================================
 HOW IT WORKS

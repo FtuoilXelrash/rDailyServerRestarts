@@ -12,9 +12,8 @@ A Rust server plugin for automated daily restarts with customizable countdown an
 - **Daily Scheduled Restarts** - Automatically restart your server at a configurable time each day
 - **Countdown Announcements** - Broadcast countdown messages to players at customizable intervals
 - **Server Save & Backup** - Optionally save and backup the server before restarting
-- **Admin Commands** - Full control over restart scheduling and cancellation
+- **Admin Commands** - Full control over restart scheduling and cancellation (console-only)
 - **Graceful Shutdown** - Kicks all players with notification before shutting down
-- **Permission System** - Restrict restart commands to admins only
 
 ## Installation
 
@@ -65,9 +64,6 @@ Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no argum
 ### `rdsr.test`
 Dev command - tests the countdown sequence with 60-second timer.
 
-## Permissions
-
-- `rdailyserverrestarts.admin` - Allows use of all restart commands
 
 ## How It Works
 
@@ -144,14 +140,3 @@ If you previously used a script that started at 03:45:00 to restart at 04:00:00,
 - Check server logs for any errors during shutdown sequence
 - Verify save/backup commands are completing successfully if enabled
 
-## Credits
-
-Based on examples from:
-- **RebootScheduler.cs** - Restart scheduling implementation
-- **SmoothRestarter.cs** - Countdown management patterns
-- **daily-restart.au3** - Original script functionality recreation
-
-## Support & Bug Reports
-
-For issues, feature requests, or contributions, visit:
-https://github.com/FtuoilXelrash/rDailyServerRestarts
