@@ -1,9 +1,9 @@
 # rDailyServerRestarts
 
-**Version:** 0.0.1
+**Version:** 0.0.42
 **Author:** Ftuoil Xelrash
 **License:** MIT / Open Source
-**Last Updated:** 2025-11-29
+**Last Updated:** 2025-11-30
 
 A Rust server plugin for automated daily restarts with customizable countdown announcements.
 
@@ -32,21 +32,8 @@ Edit `oxide/config/rDailyServerRestarts.json`:
   "Daily restart time (HH:mm:ss format, 24-hour UTC)": "04:00:00",
   "Enable server save before restart": true,
   "Enable server backup before restart": true,
-  "Countdown announcement messages": [
-    3600,
-    900,
-    600,
-    300,
-    120,
-    60,
-    30,
-    10,
-    5,
-    4,
-    3,
-    2,
-    1
-  ]
+  "Countdown duration in minutes": 15,
+  "Enable debug logging": false
 }
 ```
 
@@ -56,20 +43,27 @@ Edit `oxide/config/rDailyServerRestarts.json`:
 - **Daily restart time** - Time to restart in HH:mm:ss format using 24-hour UTC (string)
 - **Enable server save before restart** - Run `save` command before shutdown (boolean)
 - **Enable server backup before restart** - Run `backup` command before shutdown (boolean)
-- **Countdown announcement messages** - Array of seconds at which to announce countdown (int array)
+- **Countdown duration in minutes** - Used for future scheduling features (int, default: 15)
+- **Enable debug logging** - Show detailed debug messages in console (boolean, default: false)
 
 ## Commands
 
-All commands require the `rdailyserverrestarts.admin` permission.
+All commands are **server console only** - they cannot be run from in-game chat.
 
-### `/restart status`
+### `rdsr.status`
 Displays the current restart status and time remaining if a restart is scheduled.
 
-### `/restart cancel`
-Cancels the currently scheduled restart and broadcasts a cancellation message to all players.
+### `rdsr.cancel`
+Cancels the currently scheduled restart and broadcasts a cancellation message to all players. Shows when the next restart is scheduled.
 
-### `/restart now`
+### `rdsr.now`
 Schedules an immediate restart in 10 seconds.
+
+### `rdsr.schedule [seconds]`
+Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no argument provided, schedules for next day at configured daily restart time.
+
+### `rdsr.test`
+Dev command - tests the countdown sequence with 60-second timer.
 
 ## Permissions
 
@@ -83,12 +77,16 @@ Schedules an immediate restart in 10 seconds.
 3. **Countdown Starts** - The countdown coroutine launches immediately
 
 ### Countdown & Shutdown Sequence
-1. **Silent Wait Period** - Wait until "Countdown duration in minutes" before actual restart time
-2. **5-Minute Interval Announcements** - Console announcements at 15m, 10m, 5m before restart (server logs only)
-3. **Final Player Countdown** - Broadcast to connected players only: 1 minute → 30 seconds → 10 seconds → 5 seconds → NOW
-4. **Pre-Restart Actions** - Execute server save (if enabled), then server backup (if enabled)
-5. **Player Kickoff** - Kick all players with notification message
-6. **Graceful Exit** - Plugin exits; external process manager handles server restart
+When within 15 minutes of restart time, the countdown begins:
+
+1. **Initial Message** - Broadcast current time remaining (e.g., "Scheduled Daily Restart in 2m 15s")
+2. **Multi-Stage Countdown** - Announce at: 15m, 10m, 5m, 3m, 1m, 30s, 10s, 5s, NOW (both console and in-game)
+3. **Pre-Restart Delay** - Wait 2 seconds after "NOW!" message
+4. **Server Save** - Execute `save` command (if enabled), wait 10 seconds
+5. **Server Backup** - Execute `backup` command (if enabled), wait 10 seconds
+6. **Player Kickoff** - Kick all connected players with notification message, wait 5 seconds
+7. **Final Notice** - Print "Restarting server..." and wait 5 seconds
+8. **Server Shutdown** - Execute `quit` command (external process manager restarts server)
 
 ### Important Timing Note
 **The restart time you set is when the actual shutdown happens, not when the countdown begins.**

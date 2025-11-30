@@ -2,10 +2,10 @@
                     rDailyServerRestarts
 ================================================================================
 
-Version:        0.0.1
+Version:        0.0.42
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
-Last Updated:   2025-11-29
+Last Updated:   2025-11-30
 
 A Rust server plugin for automated daily restarts with customizable countdown
 announcements.
@@ -43,21 +43,8 @@ Edit oxide/config/rDailyServerRestarts.json:
   "Daily restart time (HH:mm:ss format, 24-hour UTC)": "04:00:00",
   "Enable server save before restart": true,
   "Enable server backup before restart": true,
-  "Countdown announcement messages": [
-    3600,
-    900,
-    600,
-    300,
-    120,
-    60,
-    30,
-    10,
-    5,
-    4,
-    3,
-    2,
-    1
-  ]
+  "Countdown duration in minutes": 15,
+  "Enable debug logging": false
 }
 
 CONFIGURATION OPTIONS:
@@ -74,25 +61,35 @@ CONFIGURATION OPTIONS:
 - Enable server backup before restart
   Run 'backup' command before shutdown (boolean)
 
-- Countdown announcement messages
-  Array of seconds at which to announce countdown (int array)
+- Countdown duration in minutes
+  Used for future scheduling features (int, default: 15)
+
+- Enable debug logging
+  Show detailed debug messages in console (boolean, default: false)
 
 ================================================================================
 COMMANDS
 ================================================================================
 
-All commands require the rdailyserverrestarts.admin permission.
+All commands are SERVER CONSOLE ONLY - they cannot be run from in-game chat.
 
-/restart status
+rdsr.status
   Displays the current restart status and time remaining if a restart is
   scheduled.
 
-/restart cancel
+rdsr.cancel
   Cancels the currently scheduled restart and broadcasts a cancellation message
-  to all players.
+  to all players. Shows when the next restart is scheduled.
 
-/restart now
+rdsr.now
   Schedules an immediate restart in 10 seconds.
+
+rdsr.schedule [seconds]
+  Schedules a restart in X seconds (minimum 900 seconds / 15 minutes). If no
+  argument provided, schedules for next day at configured daily restart time.
+
+rdsr.test
+  Dev command - tests the countdown sequence with 60-second timer.
 
 ================================================================================
 PERMISSIONS
