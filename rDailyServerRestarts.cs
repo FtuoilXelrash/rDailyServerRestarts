@@ -56,6 +56,9 @@ namespace Oxide.Plugins
 
             [JsonProperty(PropertyName = "Countdown duration in minutes")]
             public int CountdownMinutes { get; set; }
+
+            [JsonProperty(PropertyName = "Enable debug logging")]
+            public bool DebugLogging { get; set; }
         }
 
         private Configuration GetDefaultConfig()
@@ -66,7 +69,8 @@ namespace Oxide.Plugins
                 DailyRestartTime = "04:00:00",
                 EnableServerSave = true,
                 EnableServerBackup = true,
-                CountdownMinutes = 15
+                CountdownMinutes = 15,
+                DebugLogging = false
             };
         }
 
@@ -326,7 +330,7 @@ namespace Oxide.Plugins
             private Coroutine _restartCoroutine = null;
             private DateTime _scheduledRestartTime = DateTime.MaxValue;
             private bool _shouldCancel = false;
-            private DateTime _lastRestartAttempt = DateTime.MinValue;
+            private DateTime _lastRestartAttempt = DateTime.Now.AddHours(-1);
 
             public DateTime RestartTime { get; private set; }
             public bool IsRestarting { get; private set; }
@@ -365,7 +369,15 @@ namespace Oxide.Plugins
 
                 // Don't restart again if we just cancelled one (wait 2+ minutes before next attempt)
                 var secsSinceLastAttempt = (int)(DateTime.Now - _lastRestartAttempt).TotalSeconds;
-                if (secsSinceLastAttempt < 120) return;
+                if (secsSinceLastAttempt < 120)
+                {
+                    if (Instance._config.DebugLogging)
+                        Instance.Puts($"[DEBUG] CheckRestartTime: cooldown active ({secsSinceLastAttempt}s since last attempt)");
+                    return;
+                }
+
+                if (Instance._config.DebugLogging)
+                    Instance.Puts($"[DEBUG] CheckRestartTime: {secondsUntil}s until restart");
 
                 // Announce 15, 10, and 5 minutes before restart time
                 if (secondsUntil == 900)
@@ -381,15 +393,19 @@ namespace Oxide.Plugins
                     Instance.Puts("Scheduled Daily Restart in 5 minutes");
                 }
 
-                // Start countdown when within 90 seconds (1.5 minutes) of restart time
-                if (secondsUntil <= 90 && secondsUntil > 0)
+                // Start countdown when within 15 minutes (900 seconds) of restart time
+                if (secondsUntil <= 900 && secondsUntil > 0)
                 {
+                    if (Instance._config.DebugLogging)
+                        Instance.Puts($"[DEBUG] Calling DoRestart for {secondsUntil}s countdown");
                     _lastRestartAttempt = DateTime.Now;
                     DoRestart(_scheduledRestartTime);
                 }
                 else if (secondsUntil <= 0)
                 {
                     // Safety check: if time has passed, trigger immediately
+                    if (Instance._config.DebugLogging)
+                        Instance.Puts($"[DEBUG] Time passed, calling DoRestart immediately");
                     _lastRestartAttempt = DateTime.Now;
                     DoRestart(DateTime.Now.AddSeconds(1));
                 }
@@ -403,7 +419,14 @@ namespace Oxide.Plugins
 
             public void DoRestart(DateTime restartTime)
             {
-                if (IsRestarting) return;
+                if (Instance._config.DebugLogging)
+                    Instance.Puts($"[DEBUG] DoRestart called with {restartTime}");
+                if (IsRestarting)
+                {
+                    if (Instance._config.DebugLogging)
+                        Instance.Puts("[DEBUG] Already restarting, returning");
+                    return;
+                }
 
                 RestartTime = restartTime;
                 IsRestarting = true;
@@ -412,8 +435,13 @@ namespace Oxide.Plugins
                 var secondsLeft = (int)(restartTime - DateTime.Now).TotalSeconds;
                 if (secondsLeft < 1) secondsLeft = 1;
 
+                if (Instance._config.DebugLogging)
+                    Instance.Puts($"[DEBUG] DoRestart: Starting coroutine with {secondsLeft}s");
+
                 // Broadcast initial message with time remaining
-                Instance.Server.Broadcast($"Scheduled Daily Restart in {FormatTime(secondsLeft)}");
+                string initialMessage = $"Scheduled Daily Restart in {FormatTime(secondsLeft)}";
+                Instance.Puts($"[Countdown] {initialMessage}");
+                Instance.Server.Broadcast(initialMessage);
 
                 _restartCoroutine = StartCoroutine(RestartRoutine(secondsLeft));
             }
@@ -442,38 +470,60 @@ namespace Oxide.Plugins
             private IEnumerator RestartRoutine(int totalSecondsLeft)
             {
                 // All countdown announcements: 15m, 10m, 5m, 1m, 30s, 10s, 5s, Now!
-                int[] allCountdowns = { 900, 600, 300, 60, 30, 10, 5, 0 };
+                int[] countdownPoints = { 900, 600, 300, 60, 30, 10, 5, 0 };
+                int currentIndex = 0;
 
-                foreach (var countdown in allCountdowns)
+                if (Instance._config.DebugLogging)
+                    Instance.Puts($"[DEBUG] RestartRoutine started with {totalSecondsLeft}s");
+
+                while (totalSecondsLeft > 0 && currentIndex < countdownPoints.Length)
                 {
                     if (_shouldCancel) { Cleanup(); yield break; }
 
-                    // Recalculate time remaining based on actual restart time
+                    int nextPoint = countdownPoints[currentIndex];
                     int secondsRemaining = (int)(RestartTime - DateTime.Now).TotalSeconds;
                     if (secondsRemaining < 0) secondsRemaining = 0;
 
-                    // Skip if we've already passed this countdown point
-                    if (secondsRemaining < countdown) continue;
+                    if (Instance._config.DebugLogging)
+                        Instance.Puts($"[DEBUG] Check point {nextPoint}s, {secondsRemaining}s remaining");
+
+                    // Skip countdown points we've already passed
+                    if (secondsRemaining < nextPoint)
+                    {
+                        if (Instance._config.DebugLogging)
+                            Instance.Puts($"[DEBUG] Skipping {nextPoint}s (already passed)");
+                        currentIndex++;
+                        continue;
+                    }
 
                     // Wait until we reach this countdown point
-                    if (secondsRemaining > countdown)
+                    if (secondsRemaining > nextPoint)
                     {
-                        yield return new WaitForSecondsRealtime(secondsRemaining - countdown);
+                        if (Instance._config.DebugLogging)
+                            Instance.Puts($"[DEBUG] Waiting {secondsRemaining - nextPoint}s for {nextPoint}s point");
+                        yield return new WaitForSecondsRealtime(secondsRemaining - nextPoint);
                     }
 
                     if (_shouldCancel) { Cleanup(); yield break; }
 
-                    // Broadcast message
-                    string message = countdown == 900 ? "Scheduled Daily Restart in 15 minutes" :
-                                   countdown == 600 ? "Scheduled Daily Restart in 10 minutes" :
-                                   countdown == 300 ? "Scheduled Daily Restart in 5 minutes" :
-                                   countdown == 60 ? "Scheduled Daily Restart in 1 minute" :
-                                   countdown == 30 ? "Scheduled Daily Restart in 30 seconds" :
-                                   countdown == 10 ? "Scheduled Daily Restart in 10 seconds" :
-                                   countdown == 5 ? "Scheduled Daily Restart in 5 seconds" :
+                    // Get fresh time and broadcast message
+                    secondsRemaining = (int)(RestartTime - DateTime.Now).TotalSeconds;
+                    if (secondsRemaining < 0) secondsRemaining = 0;
+
+                    string message = nextPoint == 900 ? "Scheduled Daily Restart in 15 minutes" :
+                                   nextPoint == 600 ? "Scheduled Daily Restart in 10 minutes" :
+                                   nextPoint == 300 ? "Scheduled Daily Restart in 5 minutes" :
+                                   nextPoint == 60 ? "Scheduled Daily Restart in 1 minute" :
+                                   nextPoint == 30 ? "Scheduled Daily Restart in 30 seconds" :
+                                   nextPoint == 10 ? "Scheduled Daily Restart in 10 seconds" :
+                                   nextPoint == 5 ? "Scheduled Daily Restart in 5 seconds" :
                                    "Scheduled Daily Restart NOW!";
 
+                    Instance.Puts($"[Countdown] {message}");
                     Instance.Server.Broadcast(message);
+
+                    currentIndex++;
+                    totalSecondsLeft = secondsRemaining;
                 }
 
                 if (_shouldCancel) { Cleanup(); yield break; }
