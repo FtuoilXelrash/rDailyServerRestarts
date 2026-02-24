@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.0")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.2")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -118,6 +118,7 @@ namespace Oxide.Plugins
             cmd.AddConsoleCommand("rdsr.cancel", this, nameof(CancelCommand));
             cmd.AddConsoleCommand("rdsr.now", this, nameof(NowCommand));
             cmd.AddConsoleCommand("rdsr.schedule", this, nameof(ScheduleCommand));
+            cmd.AddChatCommand("restart", this, nameof(ChatRestartSlashCommand));
         }
 
         private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
@@ -164,13 +165,18 @@ namespace Oxide.Plugins
                 int secondsUntil = (int)(nextRestartTime - DateTime.Now).TotalSeconds;
                 if (secondsUntil > 0)
                 {
-                    BroadcastMessage($"Next scheduled restart: {nextRestartTime:HH:mm:ss} UTC ({FormatTime(secondsUntil)})");
+                    BroadcastMessage($"Next Scheduled Server Restart: {nextRestartTime:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(secondsUntil)})");
                     return;
                 }
             }
 
             // No restart scheduled
             BroadcastMessage("No restart currently scheduled");
+        }
+
+        private void ChatRestartSlashCommand(BasePlayer player, string command, string[] args)
+        {
+            HandleRestartCommand(player);
         }
 
         void Unload()
@@ -209,7 +215,7 @@ namespace Oxide.Plugins
             {
                 var secondsLeft = (int)(_restartComponent.ScheduledRestartTime - DateTime.Now).TotalSeconds;
                 if (secondsLeft > 0)
-                    Puts($"Daily restart scheduled for {_restartComponent.ScheduledRestartTime:HH:mm:ss} UTC ({FormatTime(secondsLeft)} from now)");
+                    Puts($"Daily restart scheduled for {_restartComponent.ScheduledRestartTime:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(secondsLeft)} from now)");
                 else
                     Puts("Scheduled restart time has passed");
             }
@@ -242,7 +248,7 @@ namespace Oxide.Plugins
             if (nextRestartTime < DateTime.MaxValue)
             {
                 var secondsUntil = (int)(nextRestartTime - DateTime.Now).TotalSeconds;
-                Puts($"Next restart scheduled for {nextRestartTime:HH:mm:ss} UTC ({FormatTime(secondsUntil)} from now)");
+                Puts($"Next restart scheduled for {nextRestartTime:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(secondsUntil)} from now)");
             }
         }
 
@@ -289,7 +295,7 @@ namespace Oxide.Plugins
                 _restartComponent.ScheduleManualRestart(nextRestart);
 
                 var secondsUntil = (int)(nextRestart - DateTime.Now).TotalSeconds;
-                Puts($"Restart scheduled for tomorrow at {nextRestart:HH:mm:ss} UTC ({FormatTime(secondsUntil)} from now)");
+                Puts($"Restart scheduled for tomorrow at {nextRestart:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(secondsUntil)} from now)");
                 return;
             }
 
@@ -307,7 +313,7 @@ namespace Oxide.Plugins
 
             DateTime restartTime = DateTime.Now.AddSeconds(seconds);
             _restartComponent.ScheduleManualRestart(restartTime);
-            Puts($"Restart scheduled for {restartTime:HH:mm:ss} UTC ({FormatTime(seconds)} from now)");
+            Puts($"Restart scheduled for {restartTime:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(seconds)} from now)");
         }
 
         #endregion
@@ -374,6 +380,24 @@ namespace Oxide.Plugins
 
             var today = DateTime.Now.TimeOfDay;
             return time < today ? DateTime.Now.Date.AddDays(1).Add(time) : DateTime.Now.Date.Add(time);
+        }
+
+        private static string GetTimezoneAbbreviation()
+        {
+            TimeZoneInfo tz = TimeZoneInfo.Local;
+            bool isDst = tz.IsDaylightSavingTime(DateTime.Now);
+            string tzName = isDst ? tz.DaylightName : tz.StandardName;
+
+            // Build abbreviation from first letter of each word (e.g. "Central Standard Time" -> "CST")
+            string[] words = tzName.Split(' ');
+            string abbrev = "";
+            foreach (string word in words)
+            {
+                if (word.Length > 0)
+                    abbrev += word[0];
+            }
+
+            return abbrev;
         }
 
         #endregion
@@ -652,7 +676,7 @@ namespace Oxide.Plugins
                 var secondsUntilRestart = (int)(restartTime - DateTime.Now).TotalSeconds;
                 if (secondsUntilRestart > 0)
                 {
-                    Instance.Puts($"Daily restart scheduled for {restartTime:HH:mm:ss} UTC ({FormatTime(secondsUntilRestart)} from now)");
+                    Instance.Puts($"Daily restart scheduled for {restartTime:HH:mm:ss} {GetTimezoneAbbreviation()} ({FormatTime(secondsUntilRestart)} from now)");
                 }
             }
 
