@@ -1,9 +1,9 @@
 # rDailyServerRestarts
 
-**Version:** 1.0.0
+**Version:** 1.0.2
 **Author:** Ftuoil Xelrash
 **License:** MIT / Open Source
-**Last Updated:** 2025-11-30
+**Last Updated:** 2026-02-23
 
 A Rust server plugin for automated daily restarts with customizable countdown announcements.
 
@@ -39,7 +39,7 @@ Edit `oxide/config/rDailyServerRestarts.json`:
 ### Configuration Options
 
 - **Enable daily restarts** - Turn daily automatic restarts on/off (boolean)
-- **Daily restart time** - Time to restart in HH:mm:ss format using 24-hour UTC (string)
+- **Daily restart time** - Time to restart in HH:mm:ss format using 24-hour server local time (string)
 - **Enable server save before restart** - Run `save` command before shutdown (boolean)
 - **Enable server backup before restart** - Run `backup` command before shutdown (boolean)
 - **Countdown duration in minutes** - Used for future scheduling features (int, default: 15)
@@ -52,6 +52,7 @@ Edit `oxide/config/rDailyServerRestarts.json`:
 | Command | Who | Where | Permission |
 |---------|-----|-------|-----------|
 | `!restart` | Any Player | In-Game Chat | None |
+| `/restart` | Any Player | In-Game Chat | None |
 | `rdsr.status` | Admin Only | Server Console | Console Access |
 | `rdsr.cancel` | Admin Only | Server Console | Console Access |
 | `rdsr.now` | Admin Only | Server Console | Console Access |
@@ -59,16 +60,16 @@ Edit `oxide/config/rDailyServerRestarts.json`:
 
 ### Player Commands (Everyone Can Use)
 
-#### `!restart`
+#### `!restart` and `/restart`
 **Where to use:** In-game chat only
 **Who can use:** Any player, no permissions needed
 **Cooldown:** Global 5-minute cooldown on announcements
 
-Shows the next scheduled restart time to the entire server.
+Shows the next scheduled restart time to the entire server. Both commands do exactly the same thing.
 
 **Output Examples:**
 - If restart active: `Server is restarting in X minutes Y seconds`
-- If restart scheduled: `Next scheduled restart: HH:mm:ss UTC (X hours Y minutes)`
+- If restart scheduled: `Next Scheduled Server Restart: HH:mm:ss CST (X hours Y minutes)`
 - If no restart scheduled: `No restart currently scheduled`
 - If cooldown active: `Restart info was just announced, check chat` (private message to player only)
 
@@ -113,7 +114,7 @@ When within configured countdown minutes of restart time, the countdown begins:
 If you set `DailyRestartTime = "04:00:00"`:
 - Countdown window opens 15 minutes before (at 03:45:00)
 - Final announcements begin at 03:59:00
-- **Actual shutdown occurs at 04:00:00 UTC**
+- **Actual shutdown occurs at 04:00:00 (server local time)**
 
 If you previously used a script that started at 03:45:00 to restart at 04:00:00, set the plugin to:
 - `DailyRestartTime`: 04:00:00
