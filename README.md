@@ -3,7 +3,7 @@
 **Version:** 1.0.2
 **Author:** Ftuoil Xelrash
 **License:** MIT / Open Source
-**Last Updated:** 2026-02-23
+**Last Updated:** 2026-02-24
 
 A Rust server plugin for automated daily restarts with customizable countdown announcements.
 
