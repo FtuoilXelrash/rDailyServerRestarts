@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.2")]
+    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.3")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -121,12 +121,17 @@ namespace Oxide.Plugins
             cmd.AddChatCommand("restart", this, nameof(ChatRestartSlashCommand));
         }
 
-        private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
+        private object OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
         {
-            if (player == null || string.IsNullOrEmpty(message)) return;
+            if (player == null || string.IsNullOrEmpty(message)) return null;
 
             if (message.ToLower() == "!restart")
+            {
                 HandleRestartCommand(player);
+                return true; // Suppress chat message so it is silent (not visible to other players)
+            }
+
+            return null;
         }
 
         private void HandleRestartCommand(BasePlayer player)

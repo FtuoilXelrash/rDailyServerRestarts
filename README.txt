@@ -2,10 +2,10 @@
                     rDailyServerRestarts
 ================================================================================
 
-Version:        1.0.2
+Version:        1.0.3
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
-Last Updated:   2026-02-24
+Last Updated:   2026-03-08
 
 A Rust server plugin for automated daily restarts with customizable countdown
 announcements.
@@ -88,7 +88,8 @@ PLAYER COMMANDS (Everyone Can Use)
   Cooldown: Global 5-minute cooldown on announcements
 
   Shows the next scheduled restart time to the entire server.
-  Both commands do exactly the same thing.
+  Both commands do exactly the same thing and are silent (not visible to
+  other players).
 
   Output Examples:
   - If restart active: "Server is restarting in X minutes Y seconds"
