@@ -1,8 +1,8 @@
 ================================================================================
-                    rDailyServerRestarts
+                Rust Daily Server Restarts
 ================================================================================
 
-Version:        1.0.5
+Version:        1.0.6
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
 Last Updated:   2026-05-10
