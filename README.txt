@@ -2,10 +2,10 @@
                     rDailyServerRestarts
 ================================================================================
 
-Version:        1.0.3
+Version:        1.0.5
 Author:         Ftuoil Xelrash
 License:        MIT / Open Source
-Last Updated:   2026-03-08
+Last Updated:   2026-05-10
 
 A Rust server plugin for automated daily restarts with customizable countdown
 announcements.
@@ -18,6 +18,8 @@ FEATURES
   time each day
 - Countdown Announcements - Broadcast countdown messages to players at
   customizable intervals
+- Discord Integration - Send countdown and restart alerts to public and/or admin
+  Discord channels via webhooks
 - Server Save & Backup - Optionally save and backup the server before restarting
 - Admin Commands - Full control over restart scheduling and cancellation (console-only)
 - Graceful Shutdown - Kicks all players with notification before shutting down
@@ -43,7 +45,15 @@ Edit oxide/config/rDailyServerRestarts.json:
   "Enable server save before restart": true,
   "Enable server backup before restart": true,
   "Countdown duration in minutes": 15,
-  "Enable debug logging": false
+  "Enable debug logging": false,
+  "Discord": {
+    "Public channel webhook URL": "",
+    "Admin channel webhook URL": "",
+    "Send countdown messages to public channel": true,
+    "Send countdown messages to admin channel": true,
+    "Send restart alert to public channel": true,
+    "Send restart alert to admin channel": true
+  }
 }
 
 CONFIGURATION OPTIONS:
@@ -65,6 +75,29 @@ CONFIGURATION OPTIONS:
 
 - Enable debug logging
   Show detailed debug messages in console (boolean, default: false)
+
+DISCORD OPTIONS:
+
+- Public channel webhook URL
+  Discord webhook URL for the public channel. Leave empty to disable.
+
+- Admin channel webhook URL
+  Discord webhook URL for the private admin channel. Leave empty to disable.
+
+- Send countdown messages to public channel
+  Send 5m/1m/30s/10s/5s countdown announcements to public Discord (default: true)
+
+- Send countdown messages to admin channel
+  Send countdown announcements to admin Discord (default: true)
+
+- Send restart alert to public channel
+  Send the "Server Restarting Now!" alert to public Discord (default: true)
+
+- Send restart alert to admin channel
+  Send the restart alert to admin Discord (default: true)
+
+Countdown messages use an orange Discord embed. The restart alert uses a red embed.
+Leave both webhook URLs empty to disable Discord entirely.
 
 ================================================================================
 COMMANDS - QUICK REFERENCE

@@ -10,6 +10,7 @@ using ConVar;
 using Newtonsoft.Json;
 
 using Oxide.Core;
+using Oxide.Core.Libraries;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Plugins;
 
@@ -17,7 +18,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("rDailyServerRestarts", "Ftuoil Xelrash", "1.0.3")]
+    [Info("Rust Daily Server Restarts", "Ftuoil Xelrash", "1.0.5")]
     [Description("Daily scheduled server restarts with countdown announcements")]
     public class rDailyServerRestarts : RustPlugin
     {
@@ -27,6 +28,7 @@ namespace Oxide.Plugins
         private DailyRestartComponent _restartComponent;
         private static rDailyServerRestarts Instance;
         private DateTime _lastRestartInfoCommand = DateTime.MinValue;
+        private readonly Dictionary<string, string> _headers = new Dictionary<string, string> { { "Content-Type", "application/json" } };
 
         #endregion
 
@@ -60,6 +62,30 @@ namespace Oxide.Plugins
 
             [JsonProperty(PropertyName = "Enable debug logging")]
             public bool DebugLogging { get; set; }
+
+            [JsonProperty(PropertyName = "Discord")]
+            public DiscordConfig Discord { get; set; } = new DiscordConfig();
+        }
+
+        private sealed class DiscordConfig
+        {
+            [JsonProperty(PropertyName = "Public channel webhook URL")]
+            public string PublicWebhookUrl { get; set; } = string.Empty;
+
+            [JsonProperty(PropertyName = "Admin channel webhook URL")]
+            public string AdminWebhookUrl { get; set; } = string.Empty;
+
+            [JsonProperty(PropertyName = "Send countdown messages to public channel")]
+            public bool SendCountdownToPublic { get; set; } = true;
+
+            [JsonProperty(PropertyName = "Send countdown messages to admin channel")]
+            public bool SendCountdownToAdmin { get; set; } = true;
+
+            [JsonProperty(PropertyName = "Send restart alert to public channel")]
+            public bool SendRestartAlertToPublic { get; set; } = true;
+
+            [JsonProperty(PropertyName = "Send restart alert to admin channel")]
+            public bool SendRestartAlertToAdmin { get; set; } = true;
         }
 
         private Configuration GetDefaultConfig()
@@ -71,7 +97,16 @@ namespace Oxide.Plugins
                 EnableServerSave = true,
                 EnableServerBackup = true,
                 CountdownMinutes = 15,
-                DebugLogging = false
+                DebugLogging = false,
+                Discord = new DiscordConfig
+                {
+                    PublicWebhookUrl = string.Empty,
+                    AdminWebhookUrl = string.Empty,
+                    SendCountdownToPublic = true,
+                    SendCountdownToAdmin = true,
+                    SendRestartAlertToPublic = true,
+                    SendRestartAlertToAdmin = true
+                }
             };
         }
 
@@ -405,6 +440,47 @@ namespace Oxide.Plugins
             return abbrev;
         }
 
+        private bool IsValidWebhookUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            return url.StartsWith("https://discord.com/api/webhooks/") || url.StartsWith("https://discordapp.com/api/webhooks/");
+        }
+
+        internal void SendDiscordCountdown(string message)
+        {
+            if (_config.Discord.SendCountdownToPublic)
+                SendToDiscord("Server Restart Countdown", message, _config.Discord.PublicWebhookUrl, 0xE67E22);
+            if (_config.Discord.SendCountdownToAdmin)
+                SendToDiscord("Server Restart Countdown", message, _config.Discord.AdminWebhookUrl, 0xE67E22);
+        }
+
+        internal void SendDiscordRestartAlert(string message)
+        {
+            if (_config.Discord.SendRestartAlertToPublic)
+                SendToDiscord("Server Restarting Now!", message, _config.Discord.PublicWebhookUrl, 0xE74C3C);
+            if (_config.Discord.SendRestartAlertToAdmin)
+                SendToDiscord("Server Restarting Now!", message, _config.Discord.AdminWebhookUrl, 0xE74C3C);
+        }
+
+        private void SendToDiscord(string title, string description, string webhookUrl, int color)
+        {
+            if (!IsValidWebhookUrl(webhookUrl)) return;
+
+            var embed = new DiscordEmbed()
+                .SetTitle(title)
+                .SetDescription(description)
+                .SetColor(color)
+                .SetTimestamp(DateTimeOffset.Now)
+                .SetFooter($"rDailyServerRestarts v{Version}");
+
+            string json = new DiscordMessage().AddEmbed(embed).ToJson();
+            webrequest.Enqueue(webhookUrl, json, (code, response) =>
+            {
+                if (code != 200 && code != 204)
+                    PrintError($"Discord webhook error {code}: {response}");
+            }, this, RequestMethod.POST, _headers);
+        }
+
         #endregion
 
         #region Restart Component
@@ -513,6 +589,7 @@ namespace Oxide.Plugins
                 string initialMessage = $"Scheduled Daily Restart in {FormatTime(secondsLeft)}";
                 Instance.Puts($"[Countdown] {initialMessage}");
                 Instance.Server.Broadcast(initialMessage);
+                Instance.SendDiscordCountdown(initialMessage);
 
                 _restartCoroutine = StartCoroutine(RestartRoutine(secondsLeft));
             }
@@ -625,6 +702,10 @@ namespace Oxide.Plugins
 
                     Instance.Puts($"[Countdown] {message}");
                     Instance.Server.Broadcast(message);
+                    if (nextPoint == 0)
+                        Instance.SendDiscordRestartAlert(message);
+                    else
+                        Instance.SendDiscordCountdown(message);
 
                     currentIndex++;
                     totalSecondsLeft = secondsRemaining;
@@ -699,6 +780,63 @@ namespace Oxide.Plugins
                     CancelRestart();
                 }
             }
+        }
+
+        #endregion
+
+        #region Discord Classes
+
+        private class DiscordMessage
+        {
+            [JsonProperty("content")]
+            private string Content { get; set; }
+
+            [JsonProperty("embeds")]
+            private List<DiscordEmbed> Embeds { get; set; }
+
+            public DiscordMessage()
+            {
+                Embeds = new List<DiscordEmbed>();
+            }
+
+            public DiscordMessage AddEmbed(DiscordEmbed embed)
+            {
+                Embeds.Add(embed);
+                return this;
+            }
+
+            public string ToJson() => JsonConvert.SerializeObject(this, Formatting.None,
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        }
+
+        private class DiscordEmbed
+        {
+            [JsonProperty("title")]
+            public string Title { get; set; }
+
+            [JsonProperty("description")]
+            public string Description { get; set; }
+
+            [JsonProperty("color")]
+            public int Color { get; set; }
+
+            [JsonProperty("timestamp")]
+            public DateTimeOffset? Timestamp { get; set; }
+
+            [JsonProperty("footer")]
+            public DiscordEmbedFooter Footer { get; set; }
+
+            public DiscordEmbed SetTitle(string title) { Title = title; return this; }
+            public DiscordEmbed SetDescription(string description) { Description = description; return this; }
+            public DiscordEmbed SetColor(int color) { Color = color; return this; }
+            public DiscordEmbed SetTimestamp(DateTimeOffset timestamp) { Timestamp = timestamp; return this; }
+            public DiscordEmbed SetFooter(string text) { Footer = new DiscordEmbedFooter { Text = text }; return this; }
+        }
+
+        private class DiscordEmbedFooter
+        {
+            [JsonProperty("text")]
+            public string Text { get; set; }
         }
 
         #endregion
