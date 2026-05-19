@@ -5,7 +5,7 @@
 **License:** MIT / Open Source
 **Last Updated:** 2026-05-10
 
-A Rust server plugin for automated daily restarts with customizable countdown announcements.
+A Rust server plugin for automated daily restarts with Discord countdown announcements.
 
 ## Features
 
